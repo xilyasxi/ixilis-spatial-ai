@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IXILIS | Case Study</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --stroke-color: rgba(255, 255, 255, 0.1);
+            --font-family: 'Inter', sans-serif;
+            --header-height: 72px; 
+            --grid-gutter: 19.2px; 
+            --weight-thin: 100;
+            --weight-extralight: 200;
+            --weight-light: 300;
+            --section-padding: 128px; 
+            --layout-padding: 48px; 
+            --text-dim: rgba(255, 255, 255, 0.1);
+            --text-meta: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar { width: 3.2px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            font-weight: var(--weight-light);
+            cursor: none;
+        }
+
+        #shader-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; background: #000; }
+        #shader-canvas { width: 100%; height: 100%; display: block; opacity: 0.35; }
+        .custom-cursor { position: fixed; top: 0; left: 0; width: 25.6px; height: 25.6px; border: 0.8px solid rgba(255, 255, 255, 0.4); border-radius: 50%; pointer-events: none; z-index: 9999; transition: opacity 0.3s ease; opacity: 1; will-change: transform; transform: translate3d(0, 0, 0); }
+        .custom-cursor.hidden { opacity: 0; }
+        @media (hover: none) { .custom-cursor { display: none; } body { cursor: auto; } }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            column-gap: var(--grid-gutter);
+            padding: 0 var(--layout-padding);
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--header-height);
+            z-index: 100;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(19.2px);
+            border-bottom: 0.8px solid var(--stroke-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-logo { grid-column: 1 / span 4; font-size: 10.4px; letter-spacing: 0.4em; text-transform: uppercase; font-weight: var(--weight-light); text-decoration: none; color: inherit; display: flex; align-items: center; }
+        .nav-meta { grid-column: 10 / span 3; text-align: right; font-size: 8px; color: var(--text-meta); letter-spacing: 0.2em; text-transform: uppercase; }
+
+        section { padding: var(--section-padding) 0 32px; position: relative; z-index: 10; }
+        .section-separator { width: 100%; height: 0.8px; background: linear-gradient(90deg, transparent, var(--stroke-color), transparent); margin-bottom: 64px; }
+
+        .case-header { margin-top: 48px; grid-column: 1 / span 12; display: flex; flex-direction: column; gap: 24px; margin-bottom: 64px; }
+        .case-label { font-size: 8px; color: var(--text-meta); text-transform: uppercase; letter-spacing: 0.3em; }
+        .case-title { font-size: clamp(33.6px, 7.2vw, 99.2px); font-weight: var(--weight-thin); text-transform: uppercase; line-height: 0.82; letter-spacing: -0.04em; margin-left: -4.8px; }
+        
+        .case-meta-grid { grid-column: 4 / span 9; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 96px; }
+        .meta-item h4 { font-size: 8px; color: var(--text-meta); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 8px; }
+        .meta-item p { font-size: 10.4px; color: #fff; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .case-description { grid-column: 4 / span 6; margin-bottom: 96px; }
+        .case-description p { font-size: 11.2px; line-height: 1.8; color: var(--text-dim); margin-bottom: 24px; letter-spacing: 0.05em; }
+
+        .image-grid { grid-column: 1 / span 12; display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--grid-gutter); margin-bottom: 96px; }
+        .placeholder-img { background: #080808; border: 0.8px solid var(--stroke-color); width: 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
+        .placeholder-img.full-width { grid-column: span 2; aspect-ratio: 21/9; }
+        .placeholder-img span { font-size: 8px; color: var(--text-meta); letter-spacing: 0.2em; text-transform: uppercase; }
+
+        footer { padding: 80px 0; border-top: 0.8px solid var(--stroke-color); }
+
+        @media (max-width: 1024px) {
+            :root { --layout-padding: 25.6px; --section-padding: 80px; --header-height: 64px; }
+            .layout-grid { grid-template-columns: repeat(4, 1fr); }
+            .nav-logo { grid-column: 1 / span 2; }
+            .nav-meta { display: none; }
+            .case-meta-grid { grid-column: 1 / span 4; grid-template-columns: 1fr; gap: 32px; margin-bottom: 64px; }
+            .case-description { grid-column: 1 / span 4; }
+            .image-grid { grid-column: 1 / span 4; grid-template-columns: 1fr; }
+            .placeholder-img.full-width { grid-column: span 1; aspect-ratio: 16/9; }
+        }
+    </style>
+</head>
+<body>
+    <div id="shader-container" aria-hidden="true">
+        <canvas id="shader-canvas"></canvas>
+    </div>
+    <div class="custom-cursor hidden" aria-hidden="true"></div>
+
+    <header>
+        <div class="layout-grid" style="align-items: center; width: 100%;">
+            <a href="index.html" class="nav-logo" aria-label="Back to Archive">← ARCHIVE</a>
+            <div class="nav-meta">CASE STUDY / SYSTEM LOG 001</div>
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <div class="layout-grid">
+                <div class="case-header">
+                    <span class="case-label" id="case-year">2024 / SYSTEM ARCHITECTURE</span>
+                    <h1 class="case-title" id="case-title">PROJECT</h1>
+                </div>
+
+                <div class="case-meta-grid">
+                    <div class="meta-item">
+                        <h4>Client</h4>
+                        <p id="case-client">Confidential</p>
+                    </div>
+                    <div class="meta-item">
+                        <h4>Sector</h4>
+                        <p id="case-sector">Technology</p>
+                    </div>
+                    <div class="meta-item">
+                        <h4>Role</h4>
+                        <p>Interface Architecture</p>
+                    </div>
+                </div>
+
+                <div class="image-grid">
+                    <div class="placeholder-img full-width"><span>System Overview</span></div>
+                </div>
+
+                <div class="case-description" id="case-desc">
+                    <p>Loading project data...</p>
+                </div>
+
+                <div class="image-grid">
+                    <div class="placeholder-img"><span>Component Logic</span></div>
+                    <div class="placeholder-img"><span>Visual Syntax</span></div>
+                    <div class="placeholder-img full-width"><span>Final Execution</span></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="layout-grid">
+            <div style="grid-column: 1 / span 4;">
+                <span style="font-size: 8px; color: var(--text-meta); letter-spacing: 0.2em;">IXILIS ARCHIVE</span>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>

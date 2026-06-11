@@ -1,0 +1,1032 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IXILIS | Interface Architecture</title>
+    <meta name="description" content="IXILIS - High-fidelity design agency specializing in Neural Interface Architecture and Digital Intelligence.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --stroke-color: rgba(255, 255, 255, 0.1);
+            --font-family: 'Inter', sans-serif;
+            --header-height: 72px; /* Scaled 90 * 0.8 */
+            --grid-gutter: 19.2px; /* Scaled 24 * 0.8 */
+            --weight-thin: 100;
+            --weight-extralight: 200;
+            --weight-light: 300;
+            --weight-regular: 400;
+            --section-padding: 128px; /* Scaled 160 * 0.8 */
+            --layout-padding: 48px; /* Scaled 60 * 0.8 */
+            
+            --text-dim: rgba(255, 255, 255, 0.1);
+            --text-meta: rgba(255, 255, 255, 0.05);
+            --text-placeholder: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 3.2px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-y: scroll;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            overflow-x: hidden;
+            width: 100%;
+            font-weight: var(--weight-light);
+            cursor: none;
+        }
+
+        body.menu-open, body.overlay-open {
+            overflow: hidden;
+        }
+
+        .scroll-reveal {
+            transition: color 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                        opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: color, opacity, transform;
+            opacity: 0.05;
+            color: rgba(255, 255, 255, 0.1);
+            transform: translateY(19.2px); /* 24 * 0.8 */
+        }
+
+        .scroll-reveal.in-view {
+            color: #ffffff !important;
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        #shader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            background: #000;
+        }
+
+        #shader-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            opacity: 0.35; 
+        }
+
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 25.6px; /* 32 * 0.8 */
+            height: 25.6px;
+            border: 0.8px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+            opacity: 1;
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
+        }
+
+        .custom-cursor.hidden { opacity: 0; }
+
+        a, button, input, textarea, .pill-btn, .faq-btn, .tier-row, .project-item, .overlay-close-btn { cursor: none; }
+
+        @media (hover: none) {
+            .custom-cursor { display: none; }
+            body { cursor: auto; }
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            column-gap: var(--grid-gutter);
+            padding: 0 var(--layout-padding);
+            width: 100%;
+            position: relative;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--header-height);
+            z-index: 100;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(19.2px);
+            border-bottom: 0.8px solid var(--stroke-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-logo { 
+            grid-column: 1 / span 4; 
+            font-size: 10.4px; /* 13 * 0.8 */
+            letter-spacing: 0.4em; 
+            text-transform: uppercase; 
+            font-weight: var(--weight-light); 
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .nav-tagline { 
+            grid-column: 5 / span 4; 
+            text-align: center; 
+            font-size: 8px; /* 10 * 0.8 */
+            letter-spacing: 0.5em; 
+            text-transform: uppercase; 
+            color: var(--text-meta);
+        }
+
+        .nav-meta { 
+            grid-column: 10 / span 3; 
+            text-align: right; 
+            font-size: 8px; /* 10 * 0.8 */
+            color: var(--text-meta);
+            letter-spacing: 0.2em; 
+            text-transform: uppercase; 
+        }
+
+        .mobile-toggle {
+            display: none;
+            grid-column: 12 / span 1;
+            justify-self: end;
+            background: none;
+            border: none;
+            flex-direction: column;
+            gap: 4.8px; /* 6 * 0.8 */
+            padding: 8px; /* 10 * 0.8 */
+            z-index: 1001;
+        }
+
+        .mobile-toggle span {
+            width: 16px; /* 20 * 0.8 */
+            height: 0.8px;
+            background: #fff;
+            transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .menu-open .mobile-toggle span:nth-child(1) { transform: translateY(2.8px) rotate(45deg); }
+        .menu-open .mobile-toggle span:nth-child(2) { transform: translateY(-2.8px) rotate(-45deg); }
+
+        .mobile-menu {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(32px); /* 40 * 0.8 */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: var(--layout-padding);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease, visibility 0.5s;
+            visibility: hidden;
+        }
+
+        .menu-open .mobile-menu {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 25.6px; /* 32 * 0.8 */
+        }
+
+        .mobile-nav-links a {
+            font-size: 22.4px; /* 28 * 0.8 */
+            font-weight: var(--weight-extralight);
+            color: #fff;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0;
+            transform: translateY(16px);
+            transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .menu-open .mobile-nav-links a { opacity: 0.6; transform: translateY(0); }
+        .menu-open .mobile-nav-links a:hover { opacity: 1; }
+
+        section {
+            padding: var(--section-padding) 0 32px; /* 40 * 0.8 */
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-separator {
+            width: 100%;
+            height: 0.8px;
+            background: linear-gradient(90deg, transparent, var(--stroke-color), transparent);
+        }
+
+        .label {
+            grid-column: 1 / span 2;
+            font-size: 8.8px; /* 11 * 0.8 */
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            color: var(--text-dim);
+            margin-top: 4.8px;
+            font-weight: var(--weight-light);
+        }
+
+        #hero {
+            padding: calc(var(--header-height) + 48px) 0 48px !important;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #hero .layout-grid {
+            flex: 1;
+            height: 100%;
+            grid-template-rows: 1fr auto;
+            padding-top: 0 !important;
+            padding-bottom: 24px !important; /* 30 * 0.8 */
+        }
+
+        .hero-sidebar {
+            grid-column: 1 / span 2;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 19.2px; /* 24 * 0.8 */
+            margin-top: 0;
+        }
+
+        .hero-sidebar a {
+            text-decoration: none;
+            color: #fff;
+            font-size: 8.8px; /* 11 * 0.8 */
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            opacity: 0.4;
+            transition: opacity 0.4s, transform 0.4s;
+            display: inline-block;
+        }
+
+        .hero-sidebar a:hover { opacity: 1; transform: translateX(3.2px); }
+
+        .hero-accent {
+            grid-column: 11 / span 2;
+            grid-row: 1;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 16px; /* 20 * 0.8 */
+            margin-top: 0;
+        }
+
+        .hero-accent span {
+            font-size: 8px; /* 10 * 0.8 */
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            opacity: 0.3;
+            line-height: 1.1;
+            font-weight: var(--weight-light);
+        }
+
+        .hero-title-container {
+            grid-column: 1 / span 10;
+            grid-row: 2;
+            align-self: end; 
+            margin-bottom: -0.12em;
+            position: relative;
+            z-index: 5;
+        }
+
+        .hero-title {
+            font-size: clamp(33.6px, 7.2vw, 99.2px); /* clamp(42, 9vw, 124) * 0.8 */
+            font-weight: var(--weight-thin);
+            text-transform: uppercase;
+            line-height: 0.82;
+            letter-spacing: -0.04em;
+            color: rgba(255,255,255,1);
+            margin: 0;
+            margin-left: -4.8px; /* -6 * 0.8 */
+            text-shadow: 0 3.2px 16px rgba(0,0,0,0.5);
+        }
+
+        .hero-desc-container {
+            grid-column: 9 / span 4;
+            grid-row: 2;
+            align-self: end;
+            text-align: right;
+            padding-bottom: 0; 
+            margin-bottom: 0.6em;
+        }
+
+        .hero-sub {
+            font-size: 8.8px; /* 11 * 0.8 */
+            max-width: 240px; /* 300 * 0.8 */
+            margin-left: auto;
+            line-height: 2.2;
+            color: var(--text-dim);
+            font-weight: var(--weight-light);
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            margin-bottom: 0;
+        }
+
+        .content-card {
+            background: rgba(10,10,10,0.4);
+            backdrop-filter: blur(19.2px);
+            border: 0.8px solid var(--stroke-color);
+            padding: 38.4px; /* 48 * 0.8 */
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .project-item {
+            grid-column: span 3;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .project-item:hover { 
+            background: rgba(255,255,255,0.05); 
+            border-color: rgba(255,255,255,0.4);
+            transform: translateY(-8px);
+        }
+        
+        .project-item span { 
+            font-size: 8px; /* 10 * 0.8 */
+            color: var(--text-meta); 
+            text-transform: uppercase; 
+            letter-spacing: 0.3em; 
+            margin-bottom: auto; 
+        }
+        
+        .project-item h3 { 
+            font-size: 16px; /* 20 * 0.8 */
+            font-weight: var(--weight-extralight); 
+            text-transform: uppercase; 
+            letter-spacing: 0.2em; 
+        }
+
+        .approach-grid {
+            grid-column: 4 / span 9;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            column-gap: var(--grid-gutter);
+        }
+
+        .approach-card .plus { font-size: 19.2px; /* 24 * 0.8 */ color: var(--text-meta); font-weight: var(--weight-thin); }
+        .approach-card h3 { font-size: 10.4px; /* 13 * 0.8 */ font-weight: var(--weight-light); margin: 25.6px 0 19.2px; letter-spacing: 0.35em; text-transform: uppercase; color: rgba(255,255,255,0.95); }
+        .approach-card p { font-size: 8.8px; /* 11 * 0.8 */ line-height: 2.4; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.12em; }
+
+        .protocol-header {
+            grid-column: 4 / span 6;
+            margin-bottom: 56px; /* 70 * 0.8 */
+        }
+
+        .protocol-header p {
+            font-size: 9.6px; /* 12 * 0.8 */
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            line-height: 2.2;
+            margin-bottom: 19.2px;
+        }
+
+        .pricing-list { grid-column: 4 / span 9; }
+
+        .tier-row {
+            display: grid;
+            grid-template-columns: 2fr 3fr 1.5fr;
+            align-items: center;
+            padding: 44.8px 38.4px; /* 56, 48 * 0.8 */
+            margin-bottom: 12.8px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .tier-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+            padding-left: 51.2px; /* 64 * 0.8 */
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .tier-row:hover .tier-meta h3 { color: #fff; }
+        .tier-row:hover .tier-details li { color: rgba(255, 255, 255, 0.8); }
+
+        .tier-meta h3 { font-size: 12.8px; /* 16 * 0.8 */ font-weight: var(--weight-extralight); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; color: rgba(255,255,255,0.9); transition: color 0.4s; }
+        .tier-meta span { font-size: 8px; color: var(--text-meta); letter-spacing: 0.3em; text-transform: uppercase; }
+
+        .tier-details { display: grid; grid-template-columns: 1fr 1fr; gap: 11.2px 22.4px; list-style: none; }
+        .tier-details li { font-size: 8.8px; /* 11 * 0.8 */ color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 9.6px; transition: color 0.4s; }
+        .tier-details li::before { content: ''; width: 3.2px; height: 3.2px; background: rgba(255,255,255,0.3); border-radius: 50%; }
+
+        .tier-value { text-align: right; }
+        .tier-value .price { display: block; font-size: 14.4px; /* 18 * 0.8 */ font-weight: var(--weight-extralight); letter-spacing: 0.05em; margin-bottom: 4.8px; }
+        .tier-value .cadence { font-size: 8px; color: var(--text-meta); text-transform: uppercase; letter-spacing: 0.4em; }
+
+        .pill-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 22.4px 38.4px; /* 28, 48 * 0.8 */
+            border: 0.8px solid var(--stroke-color);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            text-transform: uppercase;
+            font-size: 9.6px; /* 12 * 0.8 */
+            letter-spacing: 0.4em;
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            text-decoration: none;
+            backdrop-filter: blur(19.2px);
+            font-weight: var(--weight-light);
+            box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+        }
+
+        .pill-btn:hover { 
+            border-color: rgba(255,255,255,1); 
+            background: rgba(255,255,255,0.12); 
+            letter-spacing: 0.55em; 
+            padding-right: 32px;
+            box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+        }
+        .pill-btn span { color: var(--text-meta); font-size: 9.6px; transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
+        .pill-btn:hover span { transform: translateX(8px); color: rgba(255,255,255,1); }
+
+        .faq-item { border-bottom: 0.8px solid var(--stroke-color); }
+        .faq-btn { width: 100%; background: none; border: none; color: #fff; padding: 25.6px 0; text-align: left; font-size: 9.6px; text-transform: uppercase; letter-spacing: 0.35em; display: flex; justify-content: space-between; cursor: pointer; font-weight: var(--weight-light); transition: opacity 0.4s; }
+        .faq-btn:hover { opacity: 0.7; }
+        
+        .faq-ans { 
+            max-height: 0; 
+            overflow: hidden; 
+            transition: 
+                max-height 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;
+            font-size: 9.6px; 
+            color: var(--text-dim); 
+            line-height: 2.4; 
+            text-transform: uppercase; 
+            letter-spacing: 0.08em;
+            opacity: 0;
+            transform: translateY(6.4px); /* 8 * 0.8 */
+        }
+        
+        .faq-item.active .faq-ans { 
+            max-height: 224px; /* 280 * 0.8 */
+            padding-bottom: 25.6px; 
+            color: rgba(255, 255, 255, 0.95); 
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .contact-inputs { grid-column: 4 / span 5; }
+        .contact-inputs input, .contact-inputs textarea { 
+            width: 100%; 
+            background: rgba(255,255,255,0.03); 
+            border: none; 
+            border-bottom: 0.8px solid rgba(255,255,255,0.3); 
+            padding: 22.4px 12.8px; /* 28, 16 * 0.8 */
+            color: #fff; 
+            font-family: inherit; 
+            margin-bottom: 25.6px; 
+            outline: none; 
+            font-size: 9.6px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.3em; 
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1); 
+            font-weight: var(--weight-light); 
+        }
+
+        .contact-inputs input:focus, .contact-inputs textarea:focus { 
+            border-bottom-color: #ffffff; 
+            background: rgba(255, 255, 255, 0.08); 
+            padding-left: 25.6px;
+            box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.02);
+        }
+
+        .contact-inputs input:hover, .contact-inputs textarea:hover {
+            border-bottom-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .contact-inputs input::placeholder, 
+        .contact-inputs textarea::placeholder { 
+            color: var(--text-placeholder); 
+            opacity: 1; 
+        }
+        
+        .contact-title { grid-column: 10 / span 3; font-size: 25.6px; /* 32 * 0.8 */ font-weight: var(--weight-thin); line-height: 1.15; text-transform: uppercase; color: rgba(255,255,255,0.85); }
+
+        footer { 
+            padding: 112px 0 80px; /* 140, 100 * 0.8 */
+            background: rgba(5,5,5,0.6);
+            backdrop-filter: blur(24px);
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-col-1 { grid-column: 1 / span 4; }
+        .footer-col-4 { grid-column: 9 / span 4; text-align: right; }
+        .footer-brand { font-size: 9.6px; /* 12 * 0.8 */ letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 9.6px; display: block; text-decoration: none; color: inherit; font-weight: var(--weight-light); }
+        .footer-meta { font-size: 8px; /* 10 * 0.8 */ letter-spacing: 0.2em; color: var(--text-meta); text-transform: uppercase; line-height: 2.2; font-weight: var(--weight-light); }
+        .footer-symbol-large { font-size: 25.6px; /* 32 * 0.8 */ font-weight: var(--weight-thin); opacity: 0.15; margin-top: 19.2px; display: block; letter-spacing: 0.2em; }
+
+        /* OVERLAY STYLES */
+        #project-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 5, 5, 0.98);
+            backdrop-filter: blur(48px);
+            z-index: 2000;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+            padding-bottom: 128px;
+        }
+
+        #project-overlay.active {
+            transform: translateY(0);
+        }
+
+        .overlay-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 var(--layout-padding);
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 0.8px solid var(--stroke-color);
+            z-index: 2001;
+        }
+
+        .overlay-close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 9.6px;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            cursor: pointer;
+            padding: 12px;
+            font-family: inherit;
+            font-weight: var(--weight-light);
+            transition: opacity 0.3s;
+        }
+
+        .overlay-close-btn:hover {
+            opacity: 0.6;
+        }
+
+        .overlay-content-wrapper {
+            margin-top: 48px;
+        }
+
+        .case-header { margin-top: 48px; grid-column: 1 / span 12; display: flex; flex-direction: column; gap: 24px; margin-bottom: 64px; }
+        .case-label { font-size: 8px; color: var(--text-meta); text-transform: uppercase; letter-spacing: 0.3em; }
+        .case-title { font-size: clamp(33.6px, 7.2vw, 99.2px); font-weight: var(--weight-thin); text-transform: uppercase; line-height: 0.82; letter-spacing: -0.04em; margin-left: -4.8px; }
+        
+        .case-meta-grid { grid-column: 4 / span 9; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 96px; }
+        .meta-item h4 { font-size: 8px; color: var(--text-meta); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 8px; }
+        .meta-item p { font-size: 10.4px; color: #fff; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .case-description { grid-column: 4 / span 6; margin-bottom: 96px; }
+        .case-description p { font-size: 11.2px; line-height: 1.8; color: var(--text-dim); margin-bottom: 24px; letter-spacing: 0.05em; }
+
+        .image-grid { grid-column: 1 / span 12; display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--grid-gutter); margin-bottom: 96px; }
+        .placeholder-img { 
+            background: #080808; 
+            border: 0.8px solid var(--stroke-color); 
+            width: 100%; 
+            aspect-ratio: 16/9; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden;
+            position: relative;
+        }
+        .placeholder-img.full-width { grid-column: span 2; aspect-ratio: 21/9; }
+        
+        .project-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none; /* Hidden by default until src is set */
+            transition: opacity 0.6s ease;
+        }
+        .project-img[src] { display: block; }
+        
+        /* Fallback text only visible if img is hidden or broken */
+        .placeholder-img span { font-size: 8px; color: var(--text-meta); letter-spacing: 0.2em; text-transform: uppercase; position: absolute; z-index: 0; }
+
+        @media (max-width: 1024px) {
+            :root { --layout-padding: 25.6px; --section-padding: 80px; --header-height: 64px; }
+            .layout-grid { grid-template-columns: repeat(4, 1fr); }
+            .nav-logo { grid-column: 1 / span 2; }
+            .nav-meta { display: none; }
+            .hero-sidebar, .hero-accent, .nav-tagline, .contact-title { display: none; }
+            .mobile-toggle { display: flex; }
+            .nav-logo { grid-column: 1 / span 3; }
+            
+            #hero { 
+                height: 100dvh; 
+                padding: var(--header-height) 0 48px !important;
+                display: flex;
+                align-items: center;
+            }
+            #hero .layout-grid { 
+                grid-template-rows: auto auto; 
+                row-gap: 24px; 
+                height: auto;
+                align-content: center;
+                margin-top: -24px;
+            }
+            .hero-title-container { 
+                grid-column: 1 / span 4; 
+                grid-row: 1; 
+            }
+            .hero-title { 
+                font-size: clamp(52px, 12vw, 64px); 
+                line-height: 0.95; 
+                letter-spacing: -0.05em; 
+                margin-left: 0; 
+                text-align: left;
+            }
+            .hero-desc-container { 
+                grid-column: 1 / span 4; 
+                grid-row: 2; 
+                text-align: left;
+                margin-bottom: 8px;
+            }
+            .hero-sub { 
+                margin-left: 0; 
+                font-size: 9.6px; 
+                max-width: 85%; 
+                color: var(--text-dim); 
+                text-align: left;
+            }
+
+            .label { grid-column: 1 / span 4; margin-bottom: 22.4px; }
+            .project-item { grid-column: 1 / span 4; aspect-ratio: 16 / 10; }
+            .approach-grid { grid-column: 1 / span 4; grid-template-columns: 1fr; row-gap: 19.2px; }
+            .protocol-header { grid-column: 1 / span 4; }
+            .pricing-list { grid-column: 1 / span 4; }
+            .tier-row { grid-template-columns: 1fr; gap: 25.6px; padding: 32px 25.6px; }
+            .tier-value { text-align: left; }
+            .footer-col-1, .footer-col-4 { grid-column: 1 / span 4; text-align: left; margin-bottom: 38.4px; }
+            .footer-col-4 { margin-bottom: 0; }
+            .definition-content { grid-column: 1 / span 4 !important; }
+
+            /* Overlay Mobile Styles */
+            .case-meta-grid { grid-column: 1 / span 4; grid-template-columns: 1fr; gap: 32px; margin-bottom: 64px; }
+            .case-description { grid-column: 1 / span 4; }
+            .image-grid { grid-column: 1 / span 4; grid-template-columns: 1fr; }
+            .placeholder-img.full-width { grid-column: span 1; aspect-ratio: 16/9; }
+        }
+    </style>
+</head>
+<body>
+    <div id="shader-container" aria-hidden="true">
+        <canvas id="shader-canvas"></canvas>
+    </div>
+
+    <div class="custom-cursor hidden" aria-hidden="true"></div>
+
+    <div class="mobile-menu" aria-hidden="true">
+        <nav class="mobile-nav-links" aria-label="Mobile Navigation">
+            <a href="#projects">PROJECTS</a>
+            <a href="#philosophy">PHILOSOPHY</a>
+            <a href="#investment">INVESTMENT</a>
+            <a href="#transmission">TRANSMISSION</a>
+        </nav>
+    </div>
+
+    <!-- PROJECT OVERLAY -->
+    <div id="project-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="overlay-header">
+            <button class="overlay-close-btn" aria-label="Close Case Study">CLOSE [ESC]</button>
+        </div>
+        <div class="layout-grid overlay-content-wrapper">
+            <div class="case-header">
+                <span class="case-label" id="overlay-year"></span>
+                <h1 class="case-title" id="overlay-title"></h1>
+            </div>
+
+            <div class="case-meta-grid">
+                <div class="meta-item">
+                    <h4>Client</h4>
+                    <p id="overlay-client"></p>
+                </div>
+                <div class="meta-item">
+                    <h4>Sector</h4>
+                    <p id="overlay-sector"></p>
+                </div>
+                <div class="meta-item">
+                    <h4>Role</h4>
+                    <p>Interface Architecture</p>
+                </div>
+            </div>
+
+            <div class="image-grid">
+                <div class="placeholder-img full-width">
+                    <span>System Overview</span>
+                    <img id="overlay-hero-img" src="" alt="System Overview" class="project-img" loading="lazy">
+                </div>
+            </div>
+
+            <div class="case-description" id="overlay-desc"></div>
+
+            <div class="image-grid">
+                <div class="placeholder-img">
+                    <span>Component Logic</span>
+                    <img id="overlay-img-1" src="" alt="Component Logic" class="project-img" loading="lazy">
+                </div>
+                <div class="placeholder-img">
+                    <span>Visual Syntax</span>
+                    <img id="overlay-img-2" src="" alt="Visual Syntax" class="project-img" loading="lazy">
+                </div>
+                <div class="placeholder-img full-width">
+                    <span>Final Execution</span>
+                    <img id="overlay-img-3" src="" alt="Final Execution" class="project-img" loading="lazy">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="layout-grid" style="align-items: center; width: 100%;">
+            <a href="#hero" class="nav-logo" aria-label="IXILIS Home">
+                IXILIS
+            </a>
+            <div class="nav-tagline scroll-reveal" aria-label="Brand Tagline: Systems of Intelligence">SYSTEMS OF INTELLIGENCE</div>
+            <div class="nav-meta scroll-reveal">EST. 2025 / GLOBAL ARCHIVE</div>
+            
+            <button class="mobile-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero">
+            <div class="layout-grid">
+                <nav class="hero-sidebar" aria-label="Main Sidebar Navigation">
+                    <a href="#projects">PROJECTS</a>
+                    <a href="#philosophy">PHILOSOPHY</a>
+                    <a href="#investment">INVESTMENT</a>
+                    <a href="#transmission">TRANSMISSION</a>
+                </nav>
+                
+                <div class="hero-accent" aria-hidden="true">
+                    <span class="scroll-reveal">SYSTEMS DESIGN</span>
+                    <span class="scroll-reveal">INTERFACE LOGIC</span>
+                    <span class="scroll-reveal">AI STRATEGY</span>
+                </div>
+
+                <div class="hero-title-container">
+                    <h1 class="hero-title scroll-reveal">INTERFACE<br>ARCHITECTURE</h1>
+                </div>
+
+                <div class="hero-desc-container">
+                    <p class="hero-sub scroll-reveal">Defining the aesthetic standards of digital intelligence through refined UX and algorithmic precision.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-separator" aria-hidden="true"></div>
+
+        <!-- DEFINITION SECTION -->
+        <section id="definition" aria-labelledby="label-definition">
+            <div class="layout-grid">
+                <span class="label scroll-reveal" id="label-definition">Definition</span>
+                <div class="definition-content" style="grid-column: 4 / span 8;">
+                    <h2 class="scroll-reveal" style="font-size: 14.4px; font-weight: var(--weight-extralight); text-transform: uppercase; letter-spacing: 0.25em; margin-bottom: 25.6px; color: #fff;">SYSTEMS OF INTELLIGENCE</h2>
+                    <p class="scroll-reveal" style="font-size: 9.6px; line-height: 2.6; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.15em; max-width: 520px;">
+                        IXILIS is a high-fidelity design collective specializing in Interface Architecture. We build systemic digital environments that prioritize cognitive efficiency and aesthetic precision. Our mission is to bridge the gap between machine speed and human intuition through refined UX and algorithmic logic.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-separator" aria-hidden="true"></div>
+
+        <section id="projects" aria-labelledby="label-projects">
+            <div class="layout-grid">
+                <span class="label scroll-reveal" id="label-projects">Historical Log</span>
+                
+                <article class="project-item content-card scroll-reveal" role="button" data-id="chronos" aria-label="View Project Chronos Case Study">
+                    <span class="scroll-reveal" aria-hidden="true">2024 / INTERFACE ARCHITECTURE</span>
+                    <h3>Chronos</h3>
+                </article>
+
+                <article class="project-item content-card scroll-reveal" role="button" data-id="nebula" aria-label="View Project Nebula Case Study">
+                    <span class="scroll-reveal" aria-hidden="true">2023 / NEURAL SYSTEMS</span>
+                    <h3>Nebula</h3>
+                </article>
+
+                <article class="project-item content-card scroll-reveal" role="button" data-id="aether" aria-label="View Project Aether Case Study">
+                    <span class="scroll-reveal" aria-hidden="true">2025 / QUANTUM COMMERCE</span>
+                    <h3>Aether</h3>
+                </article>
+
+            </div>
+        </section>
+
+        <div class="section-separator" aria-hidden="true"></div>
+
+        <section id="philosophy" aria-labelledby="label-philosophy">
+            <div class="layout-grid">
+                <span class="label scroll-reveal" id="label-philosophy">Philosophy</span>
+                <div class="approach-grid">
+                    <div class="approach-card content-card scroll-reveal">
+                        <div class="plus scroll-reveal" aria-hidden="true">+</div>
+                        <h3>ANALYSIS</h3>
+                        <p class="scroll-reveal">We decode user behaviors through deep neural mapping and strategic pattern recognition.</p>
+                    </div>
+                    <div class="approach-card content-card scroll-reveal">
+                        <div class="plus scroll-reveal" aria-hidden="true">+</div>
+                        <h3>SYNTHESIS</h3>
+                        <p class="scroll-reveal">Our creative loop bridges the gap between machine speed and human intuition.</p>
+                    </div>
+                    <div class="approach-card content-card scroll-reveal">
+                        <div class="plus scroll-reveal" aria-hidden="true">+</div>
+                        <h3>EXECUTION</h3>
+                        <p class="scroll-reveal">Delivering architectural-grade code with zero-compromise visual fidelity.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-separator" aria-hidden="true"></div>
+
+        <section id="investment" aria-labelledby="label-investment">
+            <div class="layout-grid">
+                <span class="label scroll-reveal" id="label-investment">Protocol</span>
+                <div class="protocol-header">
+                    <p class="scroll-reveal">All engagements include architectural oversight, AI asset synchronization, and high-density strategic consultation.</p>
+                </div>
+
+                <div class="pricing-list">
+                    <a href="#transmission" class="tier-row content-card scroll-reveal" aria-label="Inquire about Tier 01: Retainer engagement">
+                        <div class="tier-meta">
+                            <h3>Tier 01: Retainer</h3>
+                            <span class="scroll-reveal" aria-hidden="true">Continuous Integration</span>
+                        </div>
+                        <ul class="tier-details" role="list">
+                            <li class="scroll-reveal">AI Logic Loops</li>
+                            <li class="scroll-reveal">Weekly Audits</li>
+                            <li class="scroll-reveal">Design Systems</li>
+                            <li class="scroll-reveal">Neural Mapping</li>
+                        </ul>
+                        <div class="tier-value">
+                            <span class="price">7,500</span>
+                            <span class="cadence scroll-reveal" aria-hidden="true">Per Period</span>
+                        </div>
+                    </a>
+
+                    <a href="#transmission" class="tier-row content-card scroll-reveal" aria-label="Inquire about Tier 02: Studio engagement">
+                        <div class="tier-meta">
+                            <h3>Tier 02: Studio</h3>
+                            <span class="scroll-reveal" aria-hidden="true">Fixed-Scope Deployment</span>
+                        </div>
+                        <ul class="tier-details" role="list">
+                            <li class="scroll-reveal">Interface Dev</li>
+                            <li class="scroll-reveal">Strategic Logic</li>
+                            <li class="scroll-reveal">Systemic ID</li>
+                            <li class="scroll-reveal">Asset Generation</li>
+                        </ul>
+                        <div class="tier-value">
+                            <span class="price">25,000</span>
+                            <span class="cadence scroll-reveal" aria-hidden="true">Starting</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-separator" aria-hidden="true"></div>
+
+        <section id="faq" aria-labelledby="label-faq">
+            <div class="layout-grid">
+                <span class="label scroll-reveal" id="label-faq">Insight</span>
+                <div style="grid-column: 4 / span 6;">
+                    <div class="faq-item">
+                        <button class="faq-btn scroll-reveal" aria-expanded="false" aria-controls="faq-ans-1" id="faq-btn-1">
+                            AI METHODOLOGY <span aria-hidden="true">+</span>
+                        </button>
+                        <div class="faq-ans" id="faq-ans-1" role="region" aria-labelledby="faq-btn-1">
+                            We employ proprietary models to generate design variants, allowing our lead architects to focus exclusively on emotional strategy and high-level logic.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-btn scroll-reveal" aria-expanded="false" aria-controls="faq-ans-2" id="faq-btn-2">
+                            PRODUCTION CYCLE <span aria-hidden="true">+</span>
+                        </button>
+                        <div class="faq-ans" id="faq-ans-2" role="region" aria-labelledby="faq-btn-2">
+                            Our standard engagement cycle lasts between six to twelve weeks for full-scale architectural transformations.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-btn scroll-reveal" aria-expanded="false" aria-controls="faq-ans-3" id="faq-btn-3">
+                            TECHNOLOGY STACK <span aria-hidden="true">+</span>
+                        </button>
+                        <div class="faq-ans" id="faq-ans-3" role="region" aria-labelledby="faq-btn-3">
+                            We specialize in WebGL, React, and low-level performance optimization to ensure interfaces remain fluid across all device classes.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-btn scroll-reveal" aria-expanded="false" aria-controls="faq-ans-4" id="faq-btn-4">
+                            GLOBAL AVAILABILITY <span aria-hidden="true">+</span>
+                        </button>
+                        <div class="faq-ans" id="faq-ans-4" role="region" aria-labelledby="faq-btn-4">
+                            IXILIS operates on a global decentralized model, ensuring continuous integration across multiple time zones.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-separator" aria-hidden="true"></div>
+
+        <section id="transmission" aria-labelledby="label-transmission">
+            <div class="layout-grid">
+                <span class="label scroll-reveal" id="label-transmission">Transmission</span>
+                <form class="contact-inputs" action="#" method="POST" aria-label="Contact transmission form">
+                    <input type="text" placeholder="NAME / IDENTITY" aria-label="Your full name or digital identity" required>
+                    <input type="email" placeholder="EMAIL ADDRESS" aria-label="Your primary email address" required>
+                    <textarea placeholder="BRIEF / OBJECTIVE" rows="1" aria-label="Brief project objective or inquiry" required></textarea>
+                    <button type="submit" class="pill-btn content-card scroll-reveal" style="width: auto; padding: 16px 44.8px; font-size: 8.8px;">TRANSMIT</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="layout-grid">
+            <div class="footer-col footer-col-1">
+                <a href="#hero" class="footer-brand scroll-reveal" aria-label="Back to top">IXILIS</a>
+                <div class="footer-meta scroll-reveal">
+                    ARCHITECTURAL ARCHIVE © 2025<br>
+                    ALL RIGHTS RESERVED
+                </div>
+            </div>
+            <div class="footer-col footer-col-4">
+                <div class="footer-meta scroll-reveal" id="current-time" aria-live="off">00:00:00 JST</div>
+                <span class="footer-symbol-large" aria-hidden="true">IXILIS</span>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>
