@@ -1,28 +1,51 @@
 
 // IXILIS Interactivity Implementation
 
-document.addEventListener('DOMContentLoaded', () => {
-    initCommonFeatures();
-    initMobileMenu();
-    initSmoothScroll();
-    initFAQ();
-    initProjectOverlay();
-});
+function safeInit(name: string, fn: () => void) {
+    try {
+        fn();
+    } catch (e) {
+        console.error(`[IXILIS] Error during ${name} initialization:`, e);
+    }
+}
+
+function initApp() {
+    safeInit('Common Features', initCommonFeatures);
+    safeInit('Mobile Menu', initMobileMenu);
+    safeInit('Smooth Scroll', initSmoothScroll);
+    safeInit('FAQ', initFAQ);
+    safeInit('Project Overlay', initProjectOverlay);
+    safeInit('Case Study Page', initCaseStudyPage);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 function initCommonFeatures() {
-    initCustomCursor();
-    initDynamicTime();
-    initDitheringShader();
-    initScrollReveal();
+    safeInit('Custom Cursor', initCustomCursor);
+    safeInit('Dynamic Time', initDynamicTime);
+    safeInit('Dithering Shader', initDitheringShader);
+    safeInit('Scroll Reveal', initScrollReveal);
 }
 
 /**
  * Scroll Highlight Logic
  */
 function initScrollReveal() {
+    if (!('IntersectionObserver' in window)) {
+        // Fallback for environments lacking IntersectionObserver
+        document.querySelectorAll('.scroll-reveal').forEach(el => {
+            el.classList.add('in-view');
+        });
+        return;
+    }
+
     const options = {
-        rootMargin: '-30% 0% -30% 0%',
-        threshold: 0
+        rootMargin: '0px 0px -10% 0px', // Trigger content reveal as soon as it nears the viewport
+        threshold: 0.02
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -30,7 +53,8 @@ function initScrollReveal() {
             if (entry.isIntersecting) {
                 entry.target.classList.add('in-view');
             } else {
-                entry.target.classList.remove('in-view');
+                // Keep class applied once visible so user can read naturally while scrolling back up
+                // entry.target.classList.remove('in-view');
             }
         });
     }, options);
@@ -68,73 +92,67 @@ function initMobileMenu() {
 /**
  * Project Overlay Logic
  */
+// DATA CONFIGURATION FOR CASES
+const caseData: Record<string, any> = {
+    'chronos': {
+        title: 'CHRONOS',
+        year: '2024 / ALGORITHMIC TRADING',
+        client: 'Quant-Hedge Ltd',
+        sector: 'Finance',
+        images: {
+            hero: 'assets/chronos-hero.jpg',
+            img1: 'assets/chronos-detail-1.jpg',
+            img2: 'assets/chronos-detail-2.jpg',
+            img3: 'assets/chronos-detail-3.jpg'
+        },
+        desc: `
+            <p>The objective was to reduce cognitive load in high-frequency trading environments via temporal data visualization. Traders operate in microseconds; the interface must reflect this velocity without inducing fatigue.</p>
+            <p>We developed a WebGL-accelerated time-series rendering engine with predictive interaction models. This allowed for real-time data ingestion and visualization without frame drops, maintaining a silky 120fps on workstation hardware.</p>
+            <p>The outcome was a measured 300ms reduction in decision latency per trade execution, resulting in significant aggregate efficiency gains over fiscal quarters.</p>
+        `
+    },
+    'nebula': {
+        title: 'NEBULA',
+        year: '2023 / NEURAL INTERFACE',
+        client: 'DeepMind Research',
+        sector: 'AI / ML',
+        images: {
+            hero: 'assets/nebula-hero.jpg',
+            img1: 'assets/nebula-detail-1.jpg',
+            img2: 'assets/nebula-detail-2.jpg',
+            img3: 'assets/nebula-detail-3.jpg'
+        },
+        desc: `
+            <p>Modern neural networks are often black boxes. Nebula was conceived to visualize hidden layer activations in real-time for autonomous agents, providing interpretability to the uninterpretable.</p>
+            <p>The system utilizes a node-based mapping interface with dynamic force-directed graphs. It clusters activation patterns spatially, allowing researchers to spot anomalies and biases visually.</p>
+            <p>This tool has become standard in the debugging pipeline for large language models within the partner organization.</p>
+        `
+    },
+    'aether': {
+        title: 'AETHER',
+        year: '2025 / QUANTUM SECURITY',
+        client: 'Sovereign Bank',
+        sector: 'Cryptography',
+        images: {
+            hero: 'assets/aether-hero.jpg',
+            img1: 'assets/aether-detail-1.jpg',
+            img2: 'assets/aether-detail-2.jpg',
+            img3: 'assets/aether-detail-3.jpg'
+        },
+        desc: `
+            <p>Aether abstracts complex cryptographic key management for institutional clients. The challenge was to make quantum-resistant security protocols accessible to non-technical executives.</p>
+            <p>We designed a zero-friction onboarding flow with biometric hardware integration. The interface eschews traditional "security" tropes for a calm, ethereal aesthetic that builds trust through stability.</p>
+            <p>Pilot programs showed a 94% adoption rate, proving that high security does not require high friction.</p>
+        `
+    }
+};
+
 function initProjectOverlay() {
     const overlay = document.getElementById('project-overlay');
     const closeBtn = document.querySelector('.overlay-close-btn');
     const projectItems = document.querySelectorAll('.project-item');
 
     if (!overlay || !closeBtn) return;
-
-    // DATA CONFIGURATION
-    // -------------------------------------------------------------------------
-    // To add images:
-    // 1. Create a folder named 'assets' in the same directory as index.html
-    // 2. Add your images to that folder
-    // 3. Rename them to match the paths below (e.g. 'chronos-hero.jpg')
-    // -------------------------------------------------------------------------
-    const caseData: Record<string, any> = {
-        'chronos': {
-            title: 'CHRONOS',
-            year: '2024 / ALGORITHMIC TRADING',
-            client: 'Quant-Hedge Ltd',
-            sector: 'Finance',
-            images: {
-                hero: 'assets/chronos-hero.jpg',
-                img1: 'assets/chronos-detail-1.jpg',
-                img2: 'assets/chronos-detail-2.jpg',
-                img3: 'assets/chronos-detail-3.jpg'
-            },
-            desc: `
-                <p>The objective was to reduce cognitive load in high-frequency trading environments via temporal data visualization. Traders operate in microseconds; the interface must reflect this velocity without inducing fatigue.</p>
-                <p>We developed a WebGL-accelerated time-series rendering engine with predictive interaction models. This allowed for real-time data ingestion and visualization without frame drops, maintaining a silky 120fps on workstation hardware.</p>
-                <p>The outcome was a measured 300ms reduction in decision latency per trade execution, resulting in significant aggregate efficiency gains over fiscal quarters.</p>
-            `
-        },
-        'nebula': {
-            title: 'NEBULA',
-            year: '2023 / NEURAL INTERFACE',
-            client: 'DeepMind Research',
-            sector: 'AI / ML',
-            images: {
-                hero: 'assets/nebula-hero.jpg',
-                img1: 'assets/nebula-detail-1.jpg',
-                img2: 'assets/nebula-detail-2.jpg',
-                img3: 'assets/nebula-detail-3.jpg'
-            },
-            desc: `
-                <p>Modern neural networks are often black boxes. Nebula was conceived to visualize hidden layer activations in real-time for autonomous agents, providing interpretability to the uninterpretable.</p>
-                <p>The system utilizes a node-based mapping interface with dynamic force-directed graphs. It clusters activation patterns spatially, allowing researchers to spot anomalies and biases visually.</p>
-                <p>This tool has become standard in the debugging pipeline for large language models within the partner organization.</p>
-            `
-        },
-        'aether': {
-            title: 'AETHER',
-            year: '2025 / QUANTUM SECURITY',
-            client: 'Sovereign Bank',
-            sector: 'Cryptography',
-            images: {
-                hero: 'assets/aether-hero.jpg',
-                img1: 'assets/aether-detail-1.jpg',
-                img2: 'assets/aether-detail-2.jpg',
-                img3: 'assets/aether-detail-3.jpg'
-            },
-            desc: `
-                <p>Aether abstracts complex cryptographic key management for institutional clients. The challenge was to make quantum-resistant security protocols accessible to non-technical executives.</p>
-                <p>We designed a zero-friction onboarding flow with biometric hardware integration. The interface eschews traditional "security" tropes for a calm, ethereal aesthetic that builds trust through stability.</p>
-                <p>Pilot programs showed a 94% adoption rate, proving that high security does not require high friction.</p>
-            `
-        }
-    };
 
     const setImage = (id: string, src: string) => {
         const img = document.getElementById(id) as HTMLImageElement;
@@ -164,6 +182,12 @@ function initProjectOverlay() {
         document.getElementById('overlay-client')!.innerHTML = data.client;
         document.getElementById('overlay-sector')!.innerHTML = data.sector;
         document.getElementById('overlay-desc')!.innerHTML = data.desc;
+
+        // Set Standalone Link
+        const standaloneLink = document.getElementById('overlay-standalone-link') as HTMLAnchorElement;
+        if (standaloneLink) {
+            standaloneLink.href = `case-study.html?id=${id}`;
+        }
 
         // Populate Images
         setImage('overlay-hero-img', data.images.hero);
@@ -210,6 +234,53 @@ function initProjectOverlay() {
             closeOverlay();
         }
     });
+}
+
+/**
+ * Standalone Case Study Page Populator
+ */
+function initCaseStudyPage() {
+    const caseTitle = document.getElementById('case-title');
+    const caseDesc = document.getElementById('case-desc');
+    if (!caseTitle || !caseDesc) return; // If we are not on the case study page, exit
+
+    // Resolve project ID from query parameter: case-study.html?id=nebula or case-study.html?id=aether
+    const params = new URLSearchParams(window.location.search);
+    let id = params.get('id') || 'chronos';
+
+    // Fallback if the ID doesn't exist in caseData
+    if (!caseData[id]) {
+        id = 'chronos';
+    }
+
+    const data = caseData[id];
+
+    // Populate metadata
+    document.getElementById('case-year')!.innerHTML = data.year;
+    caseTitle.innerHTML = data.title;
+    document.getElementById('case-client')!.innerHTML = data.client;
+    document.getElementById('case-sector')!.innerHTML = data.sector;
+    caseDesc.innerHTML = data.desc;
+
+    // Populate images helper
+    const setImage = (idStr: string, src: string) => {
+        const img = document.getElementById(idStr) as HTMLImageElement;
+        if (img) {
+            img.src = src;
+            img.onerror = () => {
+                img.style.display = 'none';
+                console.warn(`[IXILIS] Missing Case Study Asset: ${src}`);
+            };
+            img.onload = () => {
+                img.style.display = 'block';
+            };
+        }
+    };
+
+    setImage('case-hero-img', data.images.hero);
+    setImage('case-img-1', data.images.img1);
+    setImage('case-img-2', data.images.img2);
+    setImage('case-img-3', data.images.img3);
 }
 
 /**
