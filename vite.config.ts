@@ -1,9 +1,14 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // Ensures assets are loaded relative to where the HTML is served
-  base: './', 
+  base: './', // Generates relative asset paths for subpath hosting compatibility (such as GitHub Pages)
   build: {
-    outDir: 'dist',
-  }
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        caseStudy: 'case-study.html',
+      },
+    },
+  },
 });
+
