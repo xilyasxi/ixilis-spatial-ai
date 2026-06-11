@@ -30,6 +30,13 @@ const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   let pathname = parsedUrl.pathname;
 
+  // Intercept requests for index.tsx, index.ts, or index.js to support old cached index.html files
+  if (pathname === '/index.tsx' || pathname === '/index.ts' || pathname === '/index.js') {
+    const indexPath = path.join(ROOT_DIR, 'index.js');
+    serveFile(indexPath, res);
+    return;
+  }
+
   // SPA fallback or static resolving
   // First, check if the file exists in the DIST_DIR
   let filePath = path.join(DIST_DIR, pathname);

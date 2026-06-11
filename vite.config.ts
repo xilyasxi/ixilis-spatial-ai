@@ -1,4 +1,10 @@
 import { defineConfig } from 'vite';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   base: './', // Generates relative asset paths for subpath hosting compatibility (such as GitHub Pages)
@@ -24,6 +30,27 @@ export default defineConfig({
           res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
           res.setHeader('Pragma', 'no-cache');
           res.setHeader('Expires', '0');
+
+          const urlObj = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+          const pathname = urlObj.pathname;
+
+          // If requesting main scripts (cached as index.tsx / index.ts or current index.js)
+          if (pathname === '/index.tsx' || pathname === '/index.ts' || pathname === '/index.js') {
+            try {
+              const filePath = path.resolve(__dirname, 'index.js');
+              const code = fs.readFileSync(filePath, 'utf-8');
+              res.writeHead(200, {
+                'Content-Type': 'text/javascript',
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              });
+              res.end(code);
+              return;
+            } catch (err) {
+              console.error('Failed to serve fallback index.js', err);
+            }
+          }
 
           res.setHeader = function (name, value) {
             if (typeof name === 'string' && name.toLowerCase() === 'content-type') {
