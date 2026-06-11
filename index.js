@@ -1,7 +1,6 @@
-
 // IXILIS Interactivity Implementation
 
-function safeInit(name: string, fn: () => void) {
+function safeInit(name, fn) {
     try {
         fn();
     } catch (e) {
@@ -93,7 +92,7 @@ function initMobileMenu() {
  * Project Overlay Logic
  */
 // DATA CONFIGURATION FOR CASES
-const caseData: Record<string, any> = {
+const caseData = {
     'chronos': {
         title: 'CHRONOS',
         year: '2024 / ALGORITHMIC TRADING',
@@ -154,8 +153,8 @@ function initProjectOverlay() {
 
     if (!overlay || !closeBtn) return;
 
-    const setImage = (id: string, src: string) => {
-        const img = document.getElementById(id) as HTMLImageElement;
+    const setImage = (id, src) => {
+        const img = document.getElementById(id);
         if (img) {
             img.src = src;
             
@@ -172,19 +171,19 @@ function initProjectOverlay() {
         }
     };
 
-    const openOverlay = (id: string) => {
+    const openOverlay = (id) => {
         const data = caseData[id];
         if (!data) return;
 
         // Populate Text Data
-        document.getElementById('overlay-title')!.innerHTML = data.title;
-        document.getElementById('overlay-year')!.innerHTML = data.year;
-        document.getElementById('overlay-client')!.innerHTML = data.client;
-        document.getElementById('overlay-sector')!.innerHTML = data.sector;
-        document.getElementById('overlay-desc')!.innerHTML = data.desc;
+        document.getElementById('overlay-title').innerHTML = data.title;
+        document.getElementById('overlay-year').innerHTML = data.year;
+        document.getElementById('overlay-client').innerHTML = data.client;
+        document.getElementById('overlay-sector').innerHTML = data.sector;
+        document.getElementById('overlay-desc').innerHTML = data.desc;
 
         // Set Standalone Link
-        const standaloneLink = document.getElementById('overlay-standalone-link') as HTMLAnchorElement;
+        const standaloneLink = document.getElementById('overlay-standalone-link');
         if (standaloneLink) {
             standaloneLink.href = `case-study.html?id=${id}`;
         }
@@ -211,7 +210,7 @@ function initProjectOverlay() {
         
         // Clear images on close to prevent flashing old images on next open
         ['overlay-hero-img', 'overlay-img-1', 'overlay-img-2', 'overlay-img-3'].forEach(id => {
-            const img = document.getElementById(id) as HTMLImageElement;
+            const img = document.getElementById(id);
             if (img) { 
                 img.src = ''; 
                 img.style.display = 'none'; 
@@ -256,15 +255,15 @@ function initCaseStudyPage() {
     const data = caseData[id];
 
     // Populate metadata
-    document.getElementById('case-year')!.innerHTML = data.year;
+    document.getElementById('case-year').innerHTML = data.year;
     caseTitle.innerHTML = data.title;
-    document.getElementById('case-client')!.innerHTML = data.client;
-    document.getElementById('case-sector')!.innerHTML = data.sector;
+    document.getElementById('case-client').innerHTML = data.client;
+    document.getElementById('case-sector').innerHTML = data.sector;
     caseDesc.innerHTML = data.desc;
 
     // Populate images helper
-    const setImage = (idStr: string, src: string) => {
-        const img = document.getElementById(idStr) as HTMLImageElement;
+    const setImage = (idStr, src) => {
+        const img = document.getElementById(idStr);
         if (img) {
             img.src = src;
             img.onerror = () => {
@@ -287,12 +286,12 @@ function initCaseStudyPage() {
  * High-Performance WebGL2 Dithering Shader Manager
  */
 function initDitheringShader() {
-    const canvas = document.getElementById('shader-canvas') as HTMLCanvasElement;
+    const canvas = document.getElementById('shader-canvas');
     if (!canvas) return;
 
     const gl = canvas.getContext('webgl2');
     if (!gl) {
-        console.error('WebGL2 not supported');
+        console.warn('[IXILIS] WebGL2 not supported or disabled. Falling back gracefully.');
         return;
     }
 
@@ -384,24 +383,38 @@ function initDitheringShader() {
         fragColor = vec4(mix(bg, fg, res), 1.0);
     }`;
 
-    function createShader(gl: WebGL2RenderingContext, type: number, source: string) {
-        const shader = gl.createShader(type)!;
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error(gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
+    function createShader(glCtx, type, source) {
+        const shader = glCtx.createShader(type);
+        if (!shader) return null;
+        glCtx.shaderSource(shader, source);
+        glCtx.compileShader(shader);
+        if (!glCtx.getShaderParameter(shader, glCtx.COMPILE_STATUS)) {
+            console.warn('[IXILIS] WebGL shader compilation error:', glCtx.getShaderInfoLog(shader));
+            glCtx.deleteShader(shader);
             return null;
         }
         return shader;
     }
 
-    const program = gl.createProgram()!;
-    const vs = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)!;
-    const fs = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)!;
+    const program = gl.createProgram();
+    if (!program) return;
+
+    const vs = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    const fs = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    
+    if (!vs || !fs) {
+        console.warn('[IXILIS] Could not compile WebGL shaders. Background animation fell back gracefully.');
+        return;
+    }
+
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.warn('[IXILIS] WebGL program link error:', gl.getProgramInfoLog(program));
+        return;
+    }
 
     const locations = {
         u_time: gl.getUniformLocation(program, 'u_time'),
@@ -413,32 +426,40 @@ function initDitheringShader() {
     };
 
     const positionBuffer = gl.createBuffer();
+    if (!positionBuffer) return;
+    
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(locations.a_position);
-    gl.vertexAttribPointer(locations.a_position, 2, gl.FLOAT, false, 0, 0);
+    
+    if (locations.a_position !== -1) {
+        gl.enableVertexAttribArray(locations.a_position);
+        gl.vertexAttribPointer(locations.a_position, 2, gl.FLOAT, false, 0, 0);
+    }
 
     function resize() {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = window.innerWidth * dpr;
         canvas.height = window.innerHeight * dpr;
-        gl!.viewport(0, 0, canvas.width, canvas.height);
+        gl.viewport(0, 0, canvas.width, canvas.height);
     }
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', resize, { passive: true });
     resize();
 
     const startTime = Date.now();
+    let animFrameId;
+
     function render() {
+        if (!gl) return;
         const time = (Date.now() - startTime) * 0.001;
-        gl!.clear(gl!.COLOR_BUFFER_BIT);
-        gl!.useProgram(program);
-        gl!.uniform1f(locations.u_time, time);
-        gl!.uniform2f(locations.u_resolution, canvas.width, canvas.height);
-        gl!.uniform4f(locations.u_colorBack, 0.0, 0.0, 0.0, 1.0);
-        gl!.uniform4f(locations.u_colorFront, 1.0, 1.0, 1.0, 0.6);
-        gl!.uniform1f(locations.u_pxSize, 3.5);
-        gl!.drawArrays(gl!.TRIANGLES, 0, 6);
-        requestAnimationFrame(render);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(program);
+        gl.uniform1f(locations.u_time, time);
+        gl.uniform2f(locations.u_resolution, canvas.width, canvas.height);
+        gl.uniform4f(locations.u_colorBack, 0.0, 0.0, 0.0, 1.0);
+        gl.uniform4f(locations.u_colorFront, 1.0, 1.0, 1.0, 0.6);
+        gl.uniform1f(locations.u_pxSize, 3.5);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        animFrameId = requestAnimationFrame(render);
     }
     render();
 }
@@ -447,8 +468,15 @@ function initDitheringShader() {
  * Custom Cursor Logic
  */
 function initCustomCursor() {
-    const cursor = document.querySelector('.custom-cursor') as HTMLElement;
+    const cursor = document.querySelector('.custom-cursor');
     if (!cursor) return;
+
+    // Completely disable pointer tracking on non-pointer (touch) devices
+    if (window.matchMedia('(hover: none)').matches) {
+        cursor.classList.add('hidden');
+        cursor.style.display = 'none';
+        return;
+    }
 
     let mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
     let isInside = false;
@@ -460,7 +488,7 @@ function initCustomCursor() {
             isInside = true;
             cursor.classList.remove('hidden');
         }
-    });
+    }, { passive: true });
 
     document.addEventListener('mouseleave', () => {
         isInside = false;
@@ -475,10 +503,18 @@ function initCustomCursor() {
     };
     tick();
 
-    document.querySelectorAll('a, button, input, textarea, .pill-btn, .faq-btn, .tier-row, .project-item').forEach(el => {
-        el.addEventListener('mouseenter', () => cursor.classList.add('hidden'));
-        el.addEventListener('mouseleave', () => { if (isInside) cursor.classList.remove('hidden'); });
-    });
+    // Responsive event-delegated cursor toggling
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target;
+        if (!target) return;
+        
+        const isHoverable = target.closest('a, button, input, textarea, .pill-btn, .faq-btn, .tier-row, .project-item, .overlay-close-btn');
+        if (isHoverable) {
+            cursor.classList.add('hidden');
+        } else {
+            if (isInside) cursor.classList.remove('hidden');
+        }
+    }, { passive: true });
 }
 
 function initSmoothScroll() {
